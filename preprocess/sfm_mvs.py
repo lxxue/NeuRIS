@@ -80,7 +80,6 @@ def perform_mvs(dir_output, nResolutionLevel, bRemoveDepthMaps=True):
                                     "--verbosity", str(verbosity),
                                     "--number-views", str(nNumViews)
                                     ]
-    print(args_dense_reconstruction)
     # reconstruction
     IOUtils.run_subprocess(args_dense_reconstruction)
     

@@ -215,7 +215,8 @@ class ScannetData:
                 
     def generate_neus_data(self, radius_normalize_sphere=1.0):
         if self.path_cloud_sfm:
-            msg = input('Check bounding box of openMVS point cloud (Manually remove floating outliers)...[y/n]')
+            # msg = input('Check bounding box of openMVS point cloud (Manually remove floating outliers)...[y/n]')
+            msg = 'y'
             if msg != 'y':
                 exit()
             cloud_clean = GeometryUtils.read_point_cloud(self.path_cloud_sfm)
@@ -223,7 +224,8 @@ class ScannetData:
             self.load_and_merge_depth_maps()
             path_point_cloud_scan = f'{self.dir_scan}/point_cloud_scan.ply'
             GeometryUtils.save_points(path_point_cloud_scan,  self.pts_sample, self.colors_sample)
-            msg = input('Check bounding box of merged point cloud (Manually remove floating outliers)...[y/n]')
+            # msg = input('Check bounding box of merged point cloud (Manually remove floating outliers)...[y/n]')
+            msg = 'y'
             if msg != 'y':
                 exit()
 

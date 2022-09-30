@@ -1,4 +1,5 @@
 import argparse
+from ast import arg
 import logging
 import os
 from datetime import datetime
@@ -22,7 +23,20 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format=FORMAT)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_type', type=str, default='data type')
+    parser.add_argument('--data_type', type=str, default='private')
+    parser.add_argument('--video_name', type=str, default=None)
+    parser.add_argument('--video_ext', type=str, default='.MOV')
+    parser.add_argument('--ori_img_width', type=int, default=1920)
+    parser.add_argument('--ori_img_height', type=int, default=1080)
+    parser.add_argument('--no_crop_image', action='store_true')
+    parser.add_argument('--crop_width', type=int, default=1360)
+    parser.add_argument('--crop_height', type=int, default=1020)
+    parser.add_argument('--reso_level', type=int, default=0)
+    parser.add_argument('--no_split_image', action='store_true')
+    parser.add_argument('--no_sample_image', action='store_true')
+    parser.add_argument('--sample_interval', type=int, default=10)
+    parser.add_argument('--no_sfm', action='store_true')
+    parser.add_argument('--no_prepare_neus', action='store_true')
     args = parser.parse_args()
     
 
@@ -41,54 +55,52 @@ if __name__ == '__main__':
                                                 b_pred_normal = True, 
                                                 b_detect_planes = False,
                                                 b_unify_labels = False) 
-    
+
     if dataset_type == 'private':
+        video_name = args.video_name
+        video_ext = args.video_ext
+        original_size_img = (args.ori_img_width, args.ori_img_height)
+        cropped_size_img = (args.crop_width, args.crop_height)
+        reso_level = args.reso_level
+        b_split_image = not args.no_split_image
+        b_sample_image = not args.no_sample_image
+        sample_interval = args.sample_interval
+        b_sfm = not args.no_sfm
+        b_crop_image = not args.no_crop_image
+        b_prepare_neus = not args.no_prepare_neus
+
+
         # example of processing iPhone video
         # put a video under folder tmp_sfm_mvs or put your images under tmp_sfm_mvs/images
-        # dir_neuris = '/home/lixin/support_libs/NeuRIS/dataset/private/otmar'
-        dir_neuris = '/home/lixin/support_libs/NeuRIS/dataset/private/roger'
-        
+        dir_neuris = f'/home/lixin/support_libs/NeuRIS/dataset/private/{video_name}'
         dir_neuris = os.path.abspath(dir_neuris)
         dir_sfm_mvs = os.path.abspath(f'{dir_neuris}/tmp_sfm_mvs')
-        
-        crop_image = True
-        # original_size_img = (960, 540)
-        # cropped_size_img = (720, 540) # cropped images for normal estimation
-        original_size_img = (1920, 1080)
-        cropped_size_img = (1360, 1020)
-        reso_level = 0          
-        
+
+
         # split video into frames and sample images
-        b_split_images = True
-        # b_split_images = False
-        path_video = f'{dir_sfm_mvs}/roger.mp4'
+        path_video = f'{dir_sfm_mvs}/{video_name}.{video_ext}'
         dir_split = f'{dir_sfm_mvs}/images_split'
         dir_mvs_sample = f'{dir_sfm_mvs}/images' # for mvs reconstruction
         dir_neuris_sample = f'{dir_sfm_mvs}/images_calibrated' # remove uncalbrated images
         dir_neuris_sample_cropped = f'{dir_neuris}/image'
-        
-        if b_split_images:
-            ImageUtils.split_video_to_frames(path_video, dir_split)     
+
+        if b_split_image:
+            ImageUtils.split_video_to_frames(path_video, dir_split)
 
         # sample images
-        b_sample = True
-        sample_interval = 20
-        if b_sample:
+        if b_sample_image:
             rename_mode = 'order_04d'
-            ext_source = '.png' 
+            ext_source = '.png'
             ext_target = '.png'
-            ImageUtils.convert_images_type(dir_split, dir_mvs_sample, rename_mode, 
-                                            target_img_size = None, ext_source = ext_source, ext_target =ext_target, 
+            ImageUtils.convert_images_type(dir_split, dir_mvs_sample, rename_mode,
+                                            target_img_size = None, ext_source = ext_source, ext_target =ext_target,
                                             sample_interval = sample_interval)
-        
+
         # SfM camera calibration
-        b_sfm = True
-        # b_sfm = False
         if b_sfm:
             os.system(f'python ./preprocess/sfm_mvs.py --dir_mvs {dir_sfm_mvs} --image_width {original_size_img[0]} --image_height {original_size_img[1]} --reso_level {reso_level}')
-            
-        b_crop_image = True
-        if crop_image:
+
+        if b_crop_image:
             neuris_data.crop_images_neuris(dir_imgs = dir_neuris_sample, 
                                 dir_imgs_crop = dir_neuris_sample_cropped, 
                                 path_intrin = f'{dir_sfm_mvs}/intrinsics.txt', 
@@ -101,12 +113,11 @@ if __name__ == '__main__':
                                             dir_images_crop = f'{dir_neuris}/depth', 
                                             crop_size = cropped_size_img, 
                                             img_ext = '.npy')
-        
-        b_prepare_neus = True
+
         if b_prepare_neus:
             neuris_data.prepare_neuris_data_from_private_data(dir_neuris, cropped_size_img, 
                                                             b_generate_neus_data = True,
                                                                 b_pred_normal = True, 
                                                                 b_detect_planes = False)
-            
+
     print('Done')
