@@ -1,15 +1,20 @@
-import sys, os
 import argparse
+import os
+import sys
 
 DIR_FILE = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(DIR_FILE, '..'))
 
-import utils.utils_io as IOUtils
-import os, sys, glob, subprocess
-from pathlib import Path
-import numpy as np
-import cv2
+import glob
+import os
 import re
+import subprocess
+import sys
+from pathlib import Path
+
+import cv2
+import numpy as np
+import utils.utils_io as IOUtils
 
 # SfM and MVS paras
 nNumThreads = 6 
@@ -22,8 +27,7 @@ verbosity = 2
 nRamdomIters = 4
 nEstiIters = 2
 
-from confs.path import DIR_MVS_BUILD, DIR_MVG_BUILD
-
+from confs.path import DIR_MVG_BUILD, DIR_MVS_BUILD
 
 
 def perform_sfm(dir_images, dir_output, nImageWidth):
@@ -76,6 +80,7 @@ def perform_mvs(dir_output, nResolutionLevel, bRemoveDepthMaps=True):
                                     "--verbosity", str(verbosity),
                                     "--number-views", str(nNumViews)
                                     ]
+    print(args_dense_reconstruction)
     # reconstruction
     IOUtils.run_subprocess(args_dense_reconstruction)
     
@@ -202,7 +207,7 @@ def prepare_neus_data(dir_sfm_output, dir_neus, imgs_cal_stem, args):
 
     dir_src = f'{dir_sfm_output}'
     dir_target = f'{dir_sfm_output}/depth_calibrated'
-    assert args.reso_level == 1
+    # assert args.reso_level == 1
     select_depths(dir_src, dir_target, imgs_cal_stem, (args.image_width, args.image_height))
     
     # cameras

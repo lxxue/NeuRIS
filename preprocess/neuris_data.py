@@ -1,25 +1,27 @@
 
-import os, glob
-import logging, copy, pickle
+import copy
+import glob
+import logging
+import os
+import pickle
 
 import numpy as np
-from cv2 import  cv2
+import utils.utils_geometry as GeoUtils
+import utils.utils_image as ImageUtils
+import utils.utils_io as IOUtils
+from confs.path import (dir_snu_code, dir_tiltedsn_code,
+                        lis_name_scenes_remove, path_snu_pth,
+                        path_tiltedsn_pth_pfpn, path_tiltedsn_pth_sr)
+from cv2 import cv2
 from tqdm import tqdm
+from utils.utils_geometry import read_cam_matrix, resize_cam_intrin
+from utils.utils_image import (cluster_normals_kmeans, extract_superpixel,
+                               find_labels_max_clusters, read_image,
+                               read_images, remove_small_isolated_areas,
+                               write_image)
+from utils.utils_io import add_file_name_suffix, checkExistence
 
 from preprocess.scannet_data import ScannetData
-from utils.utils_geometry import read_cam_matrix, resize_cam_intrin
-from utils.utils_image import cluster_normals_kmeans, find_labels_max_clusters, remove_small_isolated_areas
-from utils.utils_io import add_file_name_suffix, checkExistence
-from utils.utils_image import extract_superpixel, read_image, read_images, write_image, \
-                                find_labels_max_clusters, read_image, read_images, write_image
-
-import utils.utils_geometry as GeoUtils
-import utils.utils_image  as ImageUtils
-import utils.utils_io as IOUtils
-
-from confs.path import path_tiltedsn_pth_pfpn, path_tiltedsn_pth_sr, dir_tiltedsn_code, \
-                            path_snu_pth, dir_snu_code, \
-                            lis_name_scenes_remove
 
 
 def crop_images_neuris(dir_imgs, dir_imgs_crop, path_intrin, path_intrin_crop, crop_size):
@@ -271,11 +273,18 @@ def prepare_neuris_data_from_private_data(dir_neus, size_img = (6016, 4016),
 def predict_normal(dir_neus, normal_method = 'snu'):
     # For scannet data, retraining of normal network is required to guarantee the test scenes are in the test set of normal network.
     # For your own data, the officially provided pretrained model of the normal network can be utilized directly.
+    pred_save_dir = f'{dir_neus}/pred_normal'
+
     if normal_method == 'snu':
         # ICCV2021, https://github.com/baegwangbin/surface_normal_uncertainty
         logging.info('Predict normal')
         IOUtils.changeWorkingDir(dir_snu_code)
-        os.system(f'python test.py --pretrained scannet --path_ckpt {path_snu_pth} --architecture BN --imgs_dir {dir_neus}/image/')
+        os.system(f'python test.py --pretrained scannet --path_ckpt {path_snu_pth} --architecture BN --imgs_dir {dir_neus}/image')
+        for name in os.listdir(f'{dir_neus}/image'):
+            if name[:-4].endswith('pred_norm'):
+                norm_data = (cv2.imread(os.path.join(f'{dir_neus}/image',name))/255 - 0.5)*2
+                np.savez(f"{pred_save_dir}/{name[:4]}.npz", arr_0=norm_data[...,::-1])
+                cv2.imwrite(f"{pred_save_dir}/{name[:4]}.png", ((norm_data+1)*0.5*255).astype(np.uint8))
 
     # Tilted-SN
     if normal_method == 'tiltedsn':
@@ -288,7 +297,8 @@ def predict_normal(dir_neus, normal_method = 'snu'):
                                 --batch_size 8 \
                                 --net_architecture sr_dfpn \
                                 --test_dataset {dir_neus}/image')
- 
+
+
 # normal prior
 def update_pickle_TiltedSN_rectified_2dofa(path_pickle, path_update, scenes_remove):
     '''Remove part of training data

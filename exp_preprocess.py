@@ -1,17 +1,18 @@
-import os, argparse, logging
+import argparse
+import logging
+import os
 from datetime import datetime
+
 import numpy as np
 
-import preprocess.neuris_data  as neuris_data
 import evaluation.EvalScanNet as EvalScanNet
-from evaluation.renderer import render_depthmaps_pyrender
-
+import preprocess.neuris_data as neuris_data
 import utils.utils_geometry as GeoUtils
-import utils.utils_image  as ImageUtils
+import utils.utils_image as ImageUtils
 import utils.utils_io as IOUtils
 import utils.utils_normal as NormalUtils
-
 from confs.path import lis_name_scenes
+from evaluation.renderer import render_depthmaps_pyrender
 
 if __name__ == '__main__':
     np.set_printoptions(precision=3)
@@ -44,19 +45,23 @@ if __name__ == '__main__':
     if dataset_type == 'private':
         # example of processing iPhone video
         # put a video under folder tmp_sfm_mvs or put your images under tmp_sfm_mvs/images
-        dir_neuris = '/home/ethan/Desktop/test_sfm'
+        # dir_neuris = '/home/lixin/support_libs/NeuRIS/dataset/private/otmar'
+        dir_neuris = '/home/lixin/support_libs/NeuRIS/dataset/private/roger'
         
         dir_neuris = os.path.abspath(dir_neuris)
         dir_sfm_mvs = os.path.abspath(f'{dir_neuris}/tmp_sfm_mvs')
         
         crop_image = True
+        # original_size_img = (960, 540)
+        # cropped_size_img = (720, 540) # cropped images for normal estimation
         original_size_img = (1920, 1080)
-        cropped_size_img = (1360, 1020) # cropped images for normal estimation
-        reso_level = 1          
+        cropped_size_img = (1360, 1020)
+        reso_level = 0          
         
         # split video into frames and sample images
         b_split_images = True
-        path_video = f'{dir_sfm_mvs}/video.MOV'
+        # b_split_images = False
+        path_video = f'{dir_sfm_mvs}/roger.mp4'
         dir_split = f'{dir_sfm_mvs}/images_split'
         dir_mvs_sample = f'{dir_sfm_mvs}/images' # for mvs reconstruction
         dir_neuris_sample = f'{dir_sfm_mvs}/images_calibrated' # remove uncalbrated images
@@ -67,7 +72,7 @@ if __name__ == '__main__':
 
         # sample images
         b_sample = True
-        sample_interval = 10
+        sample_interval = 20
         if b_sample:
             rename_mode = 'order_04d'
             ext_source = '.png' 
@@ -78,6 +83,7 @@ if __name__ == '__main__':
         
         # SfM camera calibration
         b_sfm = True
+        # b_sfm = False
         if b_sfm:
             os.system(f'python ./preprocess/sfm_mvs.py --dir_mvs {dir_sfm_mvs} --image_width {original_size_img[0]} --image_height {original_size_img[1]} --reso_level {reso_level}')
             

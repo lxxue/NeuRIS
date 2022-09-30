@@ -1,28 +1,31 @@
+import argparse
+import copy
+import logging
+import os
+from datetime import datetime
+from shutil import copyfile
+
 import cv2 as cv
 import numpy as np
-import os, logging, argparse, trimesh, copy
-
 import torch
 import torch.nn.functional as F
+import trimesh
+from icecream import ic
+from pyhocon import ConfigFactory, HOCONConverter
 from torch.utils.tensorboard import SummaryWriter
-
-from models.dataset import Dataset
-from models.fields import SDFNetwork, RenderingNetwork, SingleVarianceNetwork, NeRF
-from models.renderer import NeuSRenderer, extract_fields
-from models.nerf_renderer import NeRFRenderer
-from models.loss import NeuSLoss
+from tqdm import tqdm
 
 import models.patch_match_cuda as PatchMatch
-from shutil import copyfile
-from tqdm import tqdm
-from icecream import ic
-from datetime import datetime
-from pyhocon import ConfigFactory, HOCONConverter
-
-import utils.utils_io as IOUtils
 import utils.utils_geometry as GeoUtils
 import utils.utils_image as ImageUtils
+import utils.utils_io as IOUtils
 import utils.utils_training as TrainingUtils
+from models.dataset import Dataset
+from models.fields import (NeRF, RenderingNetwork, SDFNetwork,
+                           SingleVarianceNetwork)
+from models.loss import NeuSLoss
+from models.nerf_renderer import NeRFRenderer
+from models.renderer import NeuSRenderer, extract_fields
 
 
 class Runner:
@@ -144,6 +147,11 @@ class Runner:
 
             self.scan_id = int(self.scan_name[4:])
             logging.info(f"DTU scan ID: {self.scan_id}")
+        elif self.dataset_type == "private":
+            self.sample_range_indoor =  self.conf['dataset']['sample_range_indoor']
+            self.conf['dataset']['use_normal'] = True if self.conf['model.loss.normal_weight'] > 0 else False
+            self.use_indoor_data = True
+            logging.info(f"Ray sample range: {self.sample_range_indoor}")
         else:
             raise NotImplementedError
         logging.info(f"Use normal: {self.conf['dataset']['use_normal']}")
@@ -209,6 +217,8 @@ class Runner:
         if  self.dataset_type == 'dtu':
             near, far = self.dataset.near_far_from_sphere(rays_o, rays_d)
         elif self.dataset_type == 'indoor':
+            near, far = torch.zeros(batch_size, 1), self.sample_range_indoor * torch.ones(batch_size, 1)
+        elif self.dataset_type == 'private':
             near, far = torch.zeros(batch_size, 1), self.sample_range_indoor * torch.ones(batch_size, 1)
         else:
             NotImplementedError
@@ -495,6 +505,8 @@ class Runner:
             if self.dataset_type == 'dtu':
                 near, far = self.dataset.near_far_from_sphere(rays_o, rays_d)
             elif self.dataset_type == 'indoor':
+                near, far = torch.zeros(len(rays_o), 1), self.sample_range_indoor * torch.ones(len(rays_o), 1)
+            elif self.dataset_type == 'private':
                 near, far = torch.zeros(len(rays_o), 1), self.sample_range_indoor * torch.ones(len(rays_o), 1)
             else:
                 NotImplementedError
@@ -961,6 +973,8 @@ class Runner:
             if self.dataset_type == 'dtu':
                 near, far = self.dataset.near_far_from_sphere(rays_o_batch, rays_d_batch)
             elif self.dataset_type == 'indoor':
+                near, far = torch.zeros(len(rays_o_batch), 1), 1 * torch.ones(len(rays_o_batch), 1)
+            elif self.dataset_type == 'private':
                 near, far = torch.zeros(len(rays_o_batch), 1), 1 * torch.ones(len(rays_o_batch), 1)
             else:
                 NotImplementedError

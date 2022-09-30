@@ -1,26 +1,28 @@
-import torch
-import torch.nn as nn
-from torch.nn import functional as F
-from tqdm import tqdm
+import copy
+import logging
+import os
+from glob import glob
 
 import cv2 as cv
 import numpy as np
-import os, copy, logging
-
-from glob import glob
+import torch
+import torch.nn as nn
+import utils.utils_geometry as GeoUtils
+import utils.utils_image as ImageUtils
+import utils.utils_io as IOUtils
+import utils.utils_training as TrainingUtils
 from icecream import ic
 from scipy.spatial.transform import Rotation as Rot
 from scipy.spatial.transform import Slerp
-
+from torch.nn import functional as F
+from tqdm import tqdm
+from utils.utils_geometry import (get_pose_inv, get_world_normal, quat_to_rot,
+                                  save_points)
 from utils.utils_image import read_images, write_image, write_images
-from utils.utils_io import checkExistence, ensure_dir_existence, get_path_components, get_files_stem
-from utils.utils_geometry import get_pose_inv, get_world_normal, quat_to_rot, save_points
+from utils.utils_io import (checkExistence, ensure_dir_existence,
+                            get_files_stem, get_path_components)
 
-import utils.utils_geometry as GeoUtils
-import utils.utils_io as IOUtils
 import models.patch_match_cuda as PatchMatch
-import utils.utils_training as TrainingUtils
-import utils.utils_image as ImageUtils
 
 
 def load_K_Rt_from_P(filename, P=None):
@@ -147,7 +149,8 @@ class Dataset:
 
             debug_ = True
             if debug_ and IOUtils.checkExistence(f'{self.data_dir}/depth'):
-                self.depths_np, stems_depth = read_images(f'{self.data_dir}/depth', target_img_size=(w_img, h_img), img_ext='.png')
+                # self.depths_np, stems_depth = read_images(f'{self.data_dir}/depth', target_img_size=(w_img, h_img), img_ext='.png')
+                self.depths_np, stems_depth = read_images(f'{self.data_dir}/depth', target_img_size=(w_img, h_img), img_ext='.npy')
                 dir_depths_cloud = f'{self.data_dir}/depth_cloud'
                 ensure_dir_existence(dir_depths_cloud)
                 
