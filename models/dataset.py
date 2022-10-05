@@ -96,6 +96,7 @@ class Dataset:
             logging.info(f"self.masks_np.shape: {self.masks_np.shape}")
         else:
             self.masks_np = np.stack([self.read_img(im_name, self.resolution_level) for im_name in masks_lis])[:,:,:,0] / 256.0
+            logging.info(f"loaded self.masks_np.shape: {self.masks_np.shape}")
 
         if self.mask_out_image:
             self.images_np[np.where(self.masks_np < 0.5)] = 0.0
@@ -126,7 +127,7 @@ class Dataset:
             self.pose_all.append(torch.from_numpy(pose).float())
 
         self.images = torch.from_numpy(self.images_np.astype(np.float32)).cpu()  # n_images, H, W, 3   # Save GPU memory
-        self.masks  = torch.from_numpy(self.masks_np.astype(np.float32)).cpu()   # n_images, H, W, 3   # Save GPU memory
+        self.masks  = torch.from_numpy(self.masks_np.astype(np.float32)).cpu()   # n_images, H, W   # Save GPU memory
         h_img, w_img, _ = self.images[0].shape
         logging.info(f"Resolution level: {self.resolution_level}. Image size: ({w_img}, {h_img})")
 
@@ -153,7 +154,7 @@ class Dataset:
                 self.depths_np, stems_depth = read_images(f'{self.data_dir}/depth', target_img_size=(w_img, h_img), img_ext='.npy')
                 dir_depths_cloud = f'{self.data_dir}/depth_cloud'
                 ensure_dir_existence(dir_depths_cloud)
-                
+
                 for i in range(5):
                     ext_curr = get_pose_inv(self.pose_all[i].detach().cpu().numpy())
                     pts = GeoUtils.get_world_points( self.depths_np[i], self.intrinsics_all[i], ext_curr)

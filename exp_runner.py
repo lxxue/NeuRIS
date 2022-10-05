@@ -252,10 +252,13 @@ class Runner:
         if self.use_white_bkgd:
             background_rgb = torch.ones([1, 3])
 
-        if self.conf['model.loss.mask_weight'] > 0.0:
-            mask = (mask > 0.5).float()
-        else:
-            mask = torch.ones_like(mask)
+        # commented out by lixin
+        # we don't use this mask loss as masked region are human occlusions
+        # if self.conf['model.loss.mask_weight'] > 0.0:
+        #     mask = (mask > 0.5).float()
+        # else:
+        # also, we need to remove such human rays when trying to evaluate 
+        #     mask = torch.ones_like(mask)
 
         mask_sum = mask.sum() + 1e-5
 
