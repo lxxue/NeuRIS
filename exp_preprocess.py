@@ -15,6 +15,9 @@ import utils.utils_normal as NormalUtils
 from confs.path import lis_name_scenes
 from evaluation.renderer import render_depthmaps_pyrender
 
+import glob
+import cv2
+
 if __name__ == '__main__':
     np.set_printoptions(precision=3)
     np.set_printoptions(suppress=True)
@@ -36,6 +39,8 @@ if __name__ == '__main__':
     parser.add_argument('--no_sample_image', action='store_true')
     parser.add_argument('--sample_interval', type=int, default=10)
     parser.add_argument('--no_sfm', action='store_true')
+    parser.add_argument('--no_mask', action='store_true')
+    parser.add_argument('--rvm_mask_dir', type=str, default=None)
     parser.add_argument('--no_prepare_neus', action='store_true')
     args = parser.parse_args()
     
@@ -67,6 +72,8 @@ if __name__ == '__main__':
         sample_interval = args.sample_interval
         b_sfm = not args.no_sfm
         b_crop_image = not args.no_crop_image
+        rvm_mask_dir = args.rvm_mask_dir
+        b_mask = not args.no_mask
         b_prepare_neus = not args.no_prepare_neus
 
 
@@ -113,6 +120,26 @@ if __name__ == '__main__':
                                             dir_images_crop = f'{dir_neuris}/depth', 
                                             crop_size = cropped_size_img, 
                                             img_ext = '.npy')
+
+        if b_mask:
+            dir_mvs_mask_sample = f'{dir_sfm_mvs}/mask'
+            dir_mvs_image_sample = f'{dir_sfm_mvs}/images'
+            dir_neuris_mask_sample_cropped = f'{dir_neuris}/mask'
+            os.makedirs(dir_mvs_mask_sample, exist_ok=True)
+            os.makedirs(dir_neuris_mask_sample_cropped, exist_ok=True)
+            img_names = sorted(glob.glob(f'{dir_mvs_image_sample}/*.png'))
+            for img_full_name in img_names:
+                img_name = img_full_name.split('/')[-1]
+                mask_name = f"{rvm_mask_dir}/alpha/{img_name}"
+                human_mask = cv2.imread(mask_name)
+                scene_mask = 255 - human_mask
+                cv2.imwrite(f"{dir_mvs_mask_sample}/{img_name}", scene_mask)
+                # os.system(f"cp {rvm_mask_dir}/alpha/{img_name} {dir_mvs_mask_sample}/{img_name}")
+            assert b_crop_image
+            ImageUtils.crop_images(dir_images_origin = dir_mvs_mask_sample,
+                                   dir_images_crop = dir_neuris_mask_sample_cropped, 
+                                   crop_size = cropped_size_img,
+                                   img_ext = '.png')
 
         if b_prepare_neus:
             neuris_data.prepare_neuris_data_from_private_data(dir_neuris, cropped_size_img, 
