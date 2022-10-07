@@ -28,7 +28,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_type', type=str, default='private')
     parser.add_argument('--video_name', type=str, default=None)
-    parser.add_argument('--video_ext', type=str, default='.MOV')
+    parser.add_argument('--video_ext', type=str, default='MOV')
     parser.add_argument('--ori_img_width', type=int, default=1920)
     parser.add_argument('--ori_img_height', type=int, default=1080)
     parser.add_argument('--no_crop_image', action='store_true')
@@ -75,6 +75,7 @@ if __name__ == '__main__':
         rvm_mask_dir = args.rvm_mask_dir
         b_mask = not args.no_mask
         b_prepare_neus = not args.no_prepare_neus
+        print(original_size_img, cropped_size_img)
 
 
         # example of processing iPhone video
