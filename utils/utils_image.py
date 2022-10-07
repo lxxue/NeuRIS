@@ -653,9 +653,11 @@ def crop_images(dir_images_origin, dir_images_crop, crop_size, img_ext = '.png')
         
         crop_width_half = (W_origin-W_target)//2
         crop_height_half = (H_origin-H_target) //2
-        assert (W_origin-W_target)%2 ==0 and (H_origin- H_target) %2 == 0
+        # print(crop_width_half, crop_height_half)
+        # assert (W_origin-W_target)%2 ==0 and (H_origin- H_target) %2 == 0
         
-        img_crop = img_curr[crop_height_half:H_origin-crop_height_half, crop_width_half:W_origin-crop_width_half]
+        # img_crop = img_curr[crop_height_half:H_origin-crop_height_half, crop_width_half:W_origin-crop_width_half]
+        img_crop = img_curr[crop_height_half:crop_height_half+H_target, crop_width_half:crop_width_half+W_target]
         if img_ext == '.png':
             write_image(f'{dir_images_crop}/{stems_img[i]}.png', img_crop)
         elif img_ext == '.npy':

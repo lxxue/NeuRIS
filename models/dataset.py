@@ -222,9 +222,9 @@ class Dataset:
                     if i not in self.dict_neighbors:
                         print(f'[View {i}] error: No nerighbors. Using {i-1, i+1}')
                         self.dict_neighbors[i] = [i-1,i+1]
-                        msg = input('Check neighbor view...[y/n]')
-                        if msg == 'n':
-                            exit()
+                        # msg = input('Check neighbor view...[y/n]')
+                        # if msg == 'n':
+                        #    exit()
                 assert len(self.dict_neighbors) == self.n_images       
         else:
             logging.info(f'Use adjacent views as neighbors.')
