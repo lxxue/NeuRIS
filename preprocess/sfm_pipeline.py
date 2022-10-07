@@ -59,7 +59,7 @@ pIntrisics = subprocess.Popen( [os.path.join(OPENMVG_SFM_BIN, "openMVG_main_SfMI
 pIntrisics.wait()
 
 print ("2. Compute features")
-pFeatures = subprocess.Popen( [os.path.join(OPENMVG_SFM_BIN, "openMVG_main_ComputeFeatures"), "-p", "HIGH",  "-f", "1", "-i", matches_dir+"/sfm_data.json", "-o", matches_dir, "-m", "SIFT","-n",nThreads] )
+pFeatures = subprocess.Popen( [os.path.join(OPENMVG_SFM_BIN, "openMVG_main_ComputeFeatures"), "-p", "ULTRA",  "-f", "1", "-i", matches_dir+"/sfm_data.json", "-o", matches_dir, "-m", "SIFT","-n",nThreads] )
 pFeatures.wait()
 
 print ("3. Compute matches")
